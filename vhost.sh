@@ -186,7 +186,7 @@ Create_SSL() {
       for D in ${domain} ${moredomainame}
       do
         Domain_IPADDR=$(ping ${D} -c1 | sed '1{s/[^(]*(//;s/).*//;q}')
-        [ "${PUBLIC_IPADDR}" != "${Domain_IPADDR}" ] && { echo; echo "${CFAILURE}DNS problem: NXDOMAIN looking up A for ${D}${CEND}"; echo; exit 1; }
+        [ "${PUBLIC_IPADDR%.*}" != "${Domain_IPADDR%.*}" ] && { echo; echo "${CFAILURE}DNS problem: NXDOMAIN looking up A for ${D}${CEND}"; echo; exit 1; }
       done
 
       #add Email
@@ -504,9 +504,9 @@ EOF
 
   cat > ${tomcat_install_dir}/conf/vhost/${domain}.xml << EOF
 <Host name="${domain}" appBase="${vhostdir}" unpackWARs="true" autoDeploy="true"> ${Tomcat_Domain_alias}
-  <Context path="" docBase="${vhostdir}" debug="0" reloadable="false" crossContext="true"/>
+  <Context path="" docBase="${vhostdir}" reloadable="false" crossContext="true"/>
   <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
-    prefix="${domain}_access_log." suffix=".txt" pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+    prefix="${domain}_access_log" suffix=".txt" pattern="%h %l %u %t &quot;%r&quot; %s %b" />
 </Host>
 EOF
   [ -z "$(grep -o "vhost-${domain} SYSTEM" ${tomcat_install_dir}/conf/server.xml)" ] && sed -i "/vhost-localhost SYSTEM/a<\!ENTITY vhost-${domain} SYSTEM \"file://${tomcat_install_dir}/conf/vhost/${domain}.xml\">" ${tomcat_install_dir}/conf/server.xml
@@ -540,9 +540,9 @@ EOF
 Create_tomcat_conf() {
   cat > ${tomcat_install_dir}/conf/vhost/${domain}.xml << EOF
 <Host name="${domain}" appBase="webapps" unpackWARs="true" autoDeploy="true"> ${Tomcat_Domain_alias}
-  <Context path="" docBase="${vhostdir}" debug="0" reloadable="false" crossContext="true"/>
+  <Context path="" docBase="${vhostdir}" reloadable="false" crossContext="true"/>
   <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
-    prefix="${domain}_access_log." suffix=".txt" pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+    prefix="${domain}_access_log" suffix=".txt" pattern="%h %l %u %t &quot;%r&quot; %s %b" />
 </Host>
 EOF
   [ -z "$(grep -o "vhost-${domain} SYSTEM" ${tomcat_install_dir}/conf/server.xml)" ] && sed -i "/vhost-localhost SYSTEM/a<\!ENTITY vhost-${domain} SYSTEM \"file://${tomcat_install_dir}/conf/vhost/${domain}.xml\">" ${tomcat_install_dir}/conf/server.xml
@@ -571,9 +571,9 @@ server {
   server_name ${domain}${moredomainame};
   ${N_log}
   index index.html index.htm index.php;
-  include ${web_install_dir}/conf/rewrite/${rewrite}.conf;
   root ${vhostdir};
   ${Nginx_redirect}
+  include ${web_install_dir}/conf/rewrite/${rewrite}.conf;
   #error_page 404 = /404.html;
   #error_page 502 = /502.html;
   ${anti_hotlinking}
